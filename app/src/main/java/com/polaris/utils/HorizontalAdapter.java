@@ -58,6 +58,11 @@ public class HorizontalAdapter extends RecyclerView.Adapter<HorizontalAdapter.My
         return new MyViewHolder(itemView);
     }
 
+    /**
+     * Bindig text, images to views
+     * @param holder
+     * @param position
+     */
     @Override
     public void onBindViewHolder(final MyViewHolder holder, final int position) {
 

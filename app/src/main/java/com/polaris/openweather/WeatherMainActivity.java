@@ -111,6 +111,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "Weather Activity Initialized");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather_main);
         weatherDetailListView = (ListView) findViewById(R.id.weatherDetailList);
@@ -128,7 +129,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         weatherIconView = (ImageView) header.findViewById(R.id.weatherIconView);
         dateLbl = (TextView) header.findViewById(R.id.dateLbl);
 
-
+        //Auto load last searched city
         if (CommonUtils.getCity(this) != null) {
             // Weather api call
             makeWeatherApiCall(CommonUtils.getCity(this));
@@ -136,22 +137,26 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         }
     }
 
+
     /**
-     * Call to weather API
+     * call to fetch current weather info for the given city.
+     * Save the current city to the preference.
+     *
+     * @param city
      */
     private void makeWeatherApiCall(final String city) {
         WeatherService weatherService = new WeatherService();
         weatherService.getWeatherDetailForCity(this, city, new WeatherService.WeatherServiceCallbacks() {
             @Override
             public void onSuccessResponse(WeatherDetail weatherDetail) {
-
+                Log.i(TAG, "Weather info fetched");
                 loadWeatherDetail(weatherDetail);
                 CommonUtils.saveCity(WeatherMainActivity.this, city);
             }
 
             @Override
             public void onFailure(String error) {
-
+//Show error to the user
                 AlertDialog.Builder builder = new AlertDialog.Builder(WeatherMainActivity.this)
                         .setTitle("Alert!")
                         .setMessage(error)
@@ -166,6 +171,12 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     }
 
 
+    /**
+     * Method for fetching weather forecast for five days
+     * Loads forecast details to horizontal view
+     *
+     * @param city
+     */
     private void weatherForeCastService(final String city) {
         ForecastService forecastService = new ForecastService();
 
@@ -173,6 +184,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
             @Override
             public void onSuccessResponse(Forecast forecast) {
                 if (forecast != null) {
+                    Log.i(TAG, "Weather forecast info fetched");
                     HorizontalAdapter horizontalAdapter = new HorizontalAdapter(WeatherMainActivity.this, forecast.getList());
                     LinearLayoutManager horizontalLayoutManagaer
                             = new LinearLayoutManager(WeatherMainActivity.this, LinearLayoutManager.HORIZONTAL, false);
@@ -183,7 +195,6 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
             @Override
             public void onFailure() {
-
                 Log.e(TAG, "Forecast API Error");
             }
         });
@@ -356,6 +367,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     protected void startLocationUpdates() {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            Log.i(TAG, "Asking permission from users");
             askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, 100);
 
         } else {
@@ -369,6 +382,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.i(TAG, "Google API Client Connected");
         startLocationUpdates();
 
     }
@@ -376,17 +390,13 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
     @Override
     public void onConnectionSuspended(int i) {
+        Log.i(TAG, "Google API Client disconnected");
 
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // if (CommonUtils.getCity(this) == null) {
-
-        // }
-
-    }
+    /**
+     * Connect to GoogleApiClient for fetching loction.
+     */
 
     @Override
     protected void onStart() {
@@ -430,20 +440,24 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     @Override
     public void onLocationChanged(Location location) {
         stopLocationUpdates();
-
-        Geocoder gcd = new Geocoder(this, Locale.getDefault());
-        List<Address> addresses = null;
         try {
-            addresses = gcd.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-        } catch (IOException e) {
+            Log.i(TAG, "Got Users current location ");
+            Geocoder gcd = new Geocoder(this, Locale.getDefault());
+            List<Address> addresses = null;
+            try {
+                addresses = gcd.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if (addresses.size() > 0) {
+                Log.d(TAG, "Current City is, " + addresses.get(0).getLocality());
+                makeWeatherApiCall(addresses.get(0).getLocality());
+                weatherForeCastService(addresses.get(0).getLocality());
+
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        if (addresses.size() > 0) {
-            makeWeatherApiCall(addresses.get(0).getLocality());
-            weatherForeCastService(addresses.get(0).getLocality());
-
-        }
-
 
     }
 
@@ -513,6 +527,13 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         }
     }
 
+
+    /**
+     * callback for search views. Service call made after user entered text.
+     *
+     * @param query
+     * @return
+     */
     @Override
     public boolean onQueryTextSubmit(String query) {
         makeWeatherApiCall(query);

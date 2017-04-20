@@ -6,8 +6,10 @@ package com.polaris.utils;
 
 public class Constants {
 
+    //Weather Icon URL
     public static final String WEATHER_ICON_URL = "http://openweathermap.org/img/w/";
 
+    //API Keys for Open Weather api request
     public static final String API_KEY = "5fad988ce5de1a276142e4ea733ebedc";
 
 

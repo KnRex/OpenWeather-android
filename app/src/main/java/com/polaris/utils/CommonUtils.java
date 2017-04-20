@@ -73,7 +73,7 @@ public class CommonUtils {
     }
 
     /**
-     * Convert unix time to current time
+     * Converts unix time to current time
      */
 
     public static String getStandardTime(Integer unixTime) {
@@ -86,7 +86,7 @@ public class CommonUtils {
     }
 
     /**
-     * get week day for the given unix time
+     * Returns weekday for the given unix time
      */
 
     public static String getWeekday(Integer unixTime) {

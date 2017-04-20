@@ -16,7 +16,7 @@ import com.polaris.openweather.OpenWeatherApp;
 public class ImageLoaderService {
 
     /**
-     * load icon into ImageView using Image request
+     * load icon into the ImageView using Image request API
      */
 
     public void loadImage(final Context ctx, String url, final ImageView imageView) {

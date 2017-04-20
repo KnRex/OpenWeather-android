@@ -88,7 +88,6 @@ public class ForecastService {
         }
         ;
 
-        Log.i(TAG, "URL" + requestURL);
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, requestURL, null, new Response.Listener<JSONObject>() {
@@ -99,7 +98,7 @@ public class ForecastService {
 
                         try {
                             if (response != null) {
-                                Log.i(TAG, "Forecast Response==>" + response.toString());
+                                Log.d(TAG, "Forecast Response==>" + response.toString());
                                 Gson gson = new GsonBuilder().create();
                                 Forecast forecast = gson.fromJson(response.toString(), Forecast.class);
                                 forecastServiceCallback.onSuccessResponse(forecast);

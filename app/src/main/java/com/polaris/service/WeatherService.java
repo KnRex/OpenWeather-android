@@ -62,7 +62,6 @@ public class WeatherService {
         }
         ;
 
-        Log.i(TAG, "URL" + requestURL);
 
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, requestURL, null, new Response.Listener<JSONObject>() {
@@ -74,7 +73,7 @@ public class WeatherService {
                         try {
                             if (response != null) {
                                 if (response.get("cod") instanceof Integer) {
-                                    Log.i(TAG, "Response==>" + response.toString());
+                                    Log.d(TAG, "Response==>" + response.toString());
                                     Gson gson = new GsonBuilder().create();
                                     WeatherDetail weatherDetail = gson.fromJson(response.toString(), WeatherDetail.class);
                                     weatherServiceCallbacks.onSuccessResponse(weatherDetail);

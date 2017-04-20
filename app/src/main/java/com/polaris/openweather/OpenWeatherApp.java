@@ -69,6 +69,10 @@ public class OpenWeatherApp extends Application {
     }
 
 
+    /**
+     * Required for lazy loading images
+     * @return
+     */
     public ImageLoader getImageLoader() {
         getRequestQueue();
         if (mImageLoader == null) {
