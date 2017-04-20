@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">OpenWeather</string>
+    <string name="search_city">Search City</string>
 </resources>
