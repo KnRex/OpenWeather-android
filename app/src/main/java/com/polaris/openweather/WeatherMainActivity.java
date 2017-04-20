@@ -3,6 +3,7 @@ package com.polaris.openweather;
 import android.Manifest;
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -17,6 +18,9 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.SuperscriptSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -44,6 +48,7 @@ import com.polaris.model.WeatherDetail;
 import com.polaris.model.WeatherList;
 import com.polaris.service.ImageLoaderService;
 import com.polaris.service.WeatherService;
+import com.polaris.utils.CommonUtils;
 import com.polaris.utils.WeatherAdapter;
 
 import org.w3c.dom.Text;
@@ -53,7 +58,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class WeatherMainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener {
+public class WeatherMainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener, SearchView.OnQueryTextListener {
 
     private ListView weatherDetailListView;
 
@@ -69,11 +74,15 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
     private static final String WEATHER_ICON_URL = "http://openweathermap.org/img/w/";
 
+    private static final String TAG = WeatherMainActivity.class.getName();
+
     WeatherAdapter weatherAdapter;
 
     GoogleApiClient mGoogleApiClient;
 
     LocationRequest mLocationRequest;
+    private SearchView searchView;
+    private MenuItem searchMenuItem;
 
 
     /**
@@ -97,19 +106,37 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         weatherIconView = (ImageView) myHeader.findViewById(R.id.weatherIconView);
 
 
-        // Weather api call
+        if (CommonUtils.getCity(this) != null) {
+            // Weather api call
+            makeWeatherApiCall(CommonUtils.getCity(this));
+        }
+    }
+
+    /**
+     * Call to weather API
+     */
+    private void makeWeatherApiCall(final String city) {
         WeatherService weatherService = new WeatherService();
-        weatherService.getWeatherDetailForCity(this, "london", new WeatherService.WeatherServiceCallbacks() {
+        weatherService.getWeatherDetailForCity(this, city, new WeatherService.WeatherServiceCallbacks() {
             @Override
             public void onSuccessResponse(WeatherDetail weatherDetail) {
 
                 loadWeatherDetail(weatherDetail);
+                CommonUtils.saveCity(WeatherMainActivity.this, city);
             }
 
             @Override
-            public void onFailure() {
+            public void onFailure(String error) {
 
-
+                AlertDialog.Builder builder = new AlertDialog.Builder(WeatherMainActivity.this)
+                        .setTitle("Alert!")
+                        .setMessage(error)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        });
+                AlertDialog alert11 = builder.create();
+                alert11.show();
             }
         });
     }
@@ -157,6 +184,12 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
             String iconUrl = WEATHER_ICON_URL + weatherDetail.getWeather().get(0).getIcon() + ".png";
 
+
+            tempLbl.setText(CommonUtils.convertKelvinToCelsius(weatherDetail.getMain().getTemp()) + (char) 0x00B0 + "C"
+
+                    + " / " + CommonUtils.convertKelvinToFarenheit(weatherDetail.getMain().getTemp()) + (char) 0x00B0 + "F");
+
+
             ImageLoaderService imageLoaderService = new ImageLoaderService();
             imageLoaderService.loadImage(this, iconUrl, weatherIconView);
 
@@ -184,24 +217,14 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
         SearchManager searchManager = (SearchManager)
                 getSystemService(Context.SEARCH_SERVICE);
-        MenuItem searchMenuItem = menu.findItem(R.id.search);
-        SearchView searchView = (SearchView) searchMenuItem.getActionView();
+        searchMenuItem = menu.findItem(R.id.search);
+        searchView = (SearchView) searchMenuItem.getActionView();
 
         searchView.setSearchableInfo(searchManager.
                 getSearchableInfo(getComponentName()));
         searchView.setSubmitButtonEnabled(true);
-        // searchView.setOnQueryTextListener(this);
+        searchView.setOnQueryTextListener(this);
         return true;
-    }
-
-
-    protected void onStart() {
-        super.onStart();
-    }
-
-    protected void onStop() {
-        mGoogleApiClient.disconnect();
-        super.onStop();
     }
 
 
@@ -224,7 +247,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     protected void startLocationUpdates() {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            askForPermission(Manifest.permission.ACCESS_COARSE_LOCATION,100);
+            askForPermission(Manifest.permission.ACCESS_COARSE_LOCATION, 100);
 
         } else {
             createLocationRequest();
@@ -250,14 +273,16 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     @Override
     protected void onResume() {
         super.onResume();
-        if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
-                    .addConnectionCallbacks(this)
-                    .addOnConnectionFailedListener(this)
-                    .addApi(LocationServices.API)
-                    .build();
+        if (CommonUtils.getCity(this) == null) {
+            if (mGoogleApiClient == null) {
+                mGoogleApiClient = new GoogleApiClient.Builder(this)
+                        .addConnectionCallbacks(this)
+                        .addOnConnectionFailedListener(this)
+                        .addApi(LocationServices.API)
+                        .build();
+            }
+            //  mGoogleApiClient.connect();
         }
-        mGoogleApiClient.connect();
 
     }
 
@@ -268,9 +293,12 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     }
 
     protected void stopLocationUpdates() {
-        if (mGoogleApiClient != null && mGoogleApiClient.isConnected())
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(
                     mGoogleApiClient, this);
+            mGoogleApiClient.disconnect();
+        }
+
     }
 
 
@@ -289,10 +317,16 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (addresses.size() > 0)
-            System.out.println(addresses.get(0).getLocality());
+        if (addresses.size() > 0) {
+            makeWeatherApiCall(addresses.get(0).getLocality());
+        }
+
 
     }
+
+    /**
+     * @param connectionResult
+     */
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
@@ -304,6 +338,13 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         }
 
     }
+
+    /**
+     * ask location permission to the user for android version 6.0 and above
+     *
+     * @param permission
+     * @param requestCode
+     */
 
     private void askForPermission(String permission, Integer requestCode) {
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
@@ -324,6 +365,14 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         }
     }
 
+    /**
+     * Permission callback for android 6.0 and above
+     *
+     * @param requestCode
+     * @param permissions
+     * @param grantResults
+     */
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -342,5 +391,19 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         }
     }
 
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        makeWeatherApiCall(query);
+        if (searchView.isShown()) {
+            searchMenuItem.collapseActionView();
+            searchView.setQuery("", false);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        return false;
+    }
 }
 

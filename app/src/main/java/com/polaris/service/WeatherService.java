@@ -15,6 +15,9 @@ import com.polaris.openweather.OpenWeatherApp;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 /**
  * Created by kgopal on 4/19/17.
  */
@@ -27,7 +30,7 @@ public class WeatherService {
     public interface WeatherServiceCallbacks {
         public void onSuccessResponse(WeatherDetail weatherDetail);
 
-        public void onFailure();
+        public void onFailure(String error);
     }
 
     public static final String TAG = WeatherService.class.getName();
@@ -50,7 +53,14 @@ public class WeatherService {
 
         Log.i(TAG, "Sending Weather Detail API request");
 
-        final String requestURL = OPEN_WEATHER_BASE_URL + "?APPID=" + API_KEY + "&q=" + cityName;
+
+        String requestURL = "";
+        try {
+            requestURL = OPEN_WEATHER_BASE_URL + "?APPID=" + API_KEY + "&q=" + URLEncoder.encode(cityName, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        ;
 
         Log.i(TAG, "URL" + requestURL);
 
@@ -64,13 +74,13 @@ public class WeatherService {
                         try {
                             if (response != null) {
                                 if (response.get("cod") instanceof Integer) {
-                                    Log.i(TAG, "Response==>" + "Weather API request succeeded");
+                                    Log.i(TAG, "Response==>" + response.toString());
                                     Gson gson = new GsonBuilder().create();
                                     WeatherDetail weatherDetail = gson.fromJson(response.toString(), WeatherDetail.class);
                                     weatherServiceCallbacks.onSuccessResponse(weatherDetail);
                                 } else {
                                     Log.e(TAG, "City not found");
-                                    weatherServiceCallbacks.onFailure();
+                                    weatherServiceCallbacks.onFailure("City not found");
 
                                 }
                             }
@@ -78,7 +88,7 @@ public class WeatherService {
 
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            weatherServiceCallbacks.onFailure();
+                            weatherServiceCallbacks.onFailure("Server Error. Please check your internet connection");
                         }
 
                     }
@@ -87,10 +97,12 @@ public class WeatherService {
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Log.e(TAG, "Weather API request failed");
-                        if (error != null) {
+                        if (error != null && error.networkResponse != null && error.networkResponse.statusCode == 404) {
                             Log.e(TAG, "Weather API Error==>", error);
+                            weatherServiceCallbacks.onFailure("City not found");
+                        } else {
+                            weatherServiceCallbacks.onFailure("Server Error. Please check your internet connection");
                         }
-                        weatherServiceCallbacks.onFailure();
                     }
                 });
 
