@@ -17,6 +17,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
@@ -50,11 +52,15 @@ import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+import com.polaris.model.Forecast;
 import com.polaris.model.WeatherDetail;
 import com.polaris.model.WeatherList;
+import com.polaris.service.ForecastService;
 import com.polaris.service.ImageLoaderService;
 import com.polaris.service.WeatherService;
 import com.polaris.utils.CommonUtils;
+import com.polaris.utils.Constants;
+import com.polaris.utils.HorizontalAdapter;
 import com.polaris.utils.WeatherAdapter;
 
 import org.w3c.dom.Text;
@@ -76,11 +82,12 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
     private TextView tempLbl;
 
+    private TextView dateLbl;
+
     private TextView descriptionLbl;
 
     private ImageView weatherIconView;
 
-    private static final String WEATHER_ICON_URL = "http://openweathermap.org/img/w/";
 
     private static final String TAG = WeatherMainActivity.class.getName();
 
@@ -91,6 +98,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     LocationRequest mLocationRequest;
     private SearchView searchView;
     private MenuItem searchMenuItem;
+
+    private RecyclerView horizontalView;
 
 
     String city;
@@ -105,19 +114,25 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather_main);
         weatherDetailListView = (ListView) findViewById(R.id.weatherDetailList);
-        LayoutInflater myinflater = getLayoutInflater();
-        ViewGroup myHeader = (ViewGroup) myinflater.inflate(R.layout.weather_detail_header, null);
-        weatherDetailListView.addHeaderView(myHeader);
+        LayoutInflater inflater = getLayoutInflater();
+        ViewGroup header = (ViewGroup) inflater.inflate(R.layout.weather_detail_header, null);
+        weatherDetailListView.addHeaderView(header);
         weatherListData = new ArrayList<>();
 
-        tempLbl = (TextView) myHeader.findViewById(R.id.weatherDegree);
-        descriptionLbl = (TextView) myHeader.findViewById(R.id.weatherDescription);
-        weatherIconView = (ImageView) myHeader.findViewById(R.id.weatherIconView);
+        ViewGroup footer = (ViewGroup) inflater.inflate(R.layout.weather_deatil_footer, null);
+        weatherDetailListView.addFooterView(footer);
+        horizontalView = (RecyclerView) footer.findViewById(R.id.recycler_view);
+
+        tempLbl = (TextView) header.findViewById(R.id.weatherDegree);
+        descriptionLbl = (TextView) header.findViewById(R.id.weatherDescription);
+        weatherIconView = (ImageView) header.findViewById(R.id.weatherIconView);
+        dateLbl = (TextView) header.findViewById(R.id.dateLbl);
 
 
         if (CommonUtils.getCity(this) != null) {
             // Weather api call
             makeWeatherApiCall(CommonUtils.getCity(this));
+            weatherForeCastService(CommonUtils.getCity(this));
         }
     }
 
@@ -151,12 +166,38 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     }
 
 
+    private void weatherForeCastService(final String city) {
+        ForecastService forecastService = new ForecastService();
+
+        forecastService.getWeatherForecastForCity(this, city, new ForecastService.ForecastServiceCallback() {
+            @Override
+            public void onSuccessResponse(Forecast forecast) {
+                if (forecast != null) {
+                    HorizontalAdapter horizontalAdapter = new HorizontalAdapter(WeatherMainActivity.this, forecast.getList());
+                    LinearLayoutManager horizontalLayoutManagaer
+                            = new LinearLayoutManager(WeatherMainActivity.this, LinearLayoutManager.HORIZONTAL, false);
+                    horizontalView.setLayoutManager(horizontalLayoutManagaer);
+                    horizontalView.setAdapter(horizontalAdapter);
+                }
+            }
+
+            @Override
+            public void onFailure() {
+
+                Log.e(TAG, "Forecast API Error");
+            }
+        });
+    }
+
+
     /**
      * loads weather detail into the listview
      *
      * @param weatherDetail
      */
     private void loadWeatherDetail(WeatherDetail weatherDetail) {
+
+        weatherListData.clear();
 
         if (weatherDetail != null) {
 
@@ -188,31 +229,27 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
                 weatherListData.add(visibility);
             }
 
-            if(weatherDetail.getDt()!=null){
-                WeatherList lastUpdated = new WeatherList();
-                lastUpdated.setWeatherKey("Updated At :");
-                lastUpdated.setWeatherInfo(CommonUtils.getStandardTime(weatherDetail.getDt()));
-                weatherListData.add(lastUpdated);
-            }
 
-            if(weatherDetail.getSys().getSunrise()!=null){
+            if (weatherDetail.getSys().getSunrise() != null) {
                 WeatherList sunRise = new WeatherList();
                 sunRise.setWeatherKey("Sunrise :");
                 sunRise.setWeatherInfo(CommonUtils.getStandardTime(weatherDetail.getSys().getSunrise()));
                 weatherListData.add(sunRise);
             }
 
-            if(weatherDetail.getSys().getSunset()!=null){
+            if (weatherDetail.getSys().getSunset() != null) {
                 WeatherList sunSet = new WeatherList();
                 sunSet.setWeatherKey("Sunset :");
-                sunSet.setWeatherInfo(CommonUtils.getStandardTime(weatherDetail.getSys().getSunrise()));
+                sunSet.setWeatherInfo(CommonUtils.getStandardTime(weatherDetail.getSys().getSunset()));
                 weatherListData.add(sunSet);
             }
 
             setTitle(weatherDetail.getName() + ", " + weatherDetail.getSys().getCountry());
             descriptionLbl.setText(weatherDetail.getWeather().get(0).getDescription());
 
-            String iconUrl = WEATHER_ICON_URL + weatherDetail.getWeather().get(0).getIcon() + ".png";
+            dateLbl.setText("Today at " + CommonUtils.getStandardTime(weatherDetail.getDt()));
+
+            String iconUrl = Constants.WEATHER_ICON_URL + weatherDetail.getWeather().get(0).getIcon() + ".png";
 
 
             tempLbl.setText(CommonUtils.convertKelvinToCelsius(weatherDetail.getMain().getTemp()) + (char) 0x00B0 + "C"
@@ -226,6 +263,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
             if (weatherAdapter == null) {
                 weatherAdapter = new WeatherAdapter(this, R.layout.weather_list_row, weatherListData);
                 weatherDetailListView.setAdapter(weatherAdapter);
+            } else {
+                weatherAdapter.notifyDataSetChanged();
             }
 
         }
@@ -391,7 +430,6 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     @Override
     public void onLocationChanged(Location location) {
         stopLocationUpdates();
-        Toast.makeText(this, "" + " is already granted.", Toast.LENGTH_SHORT).show();
 
         Geocoder gcd = new Geocoder(this, Locale.getDefault());
         List<Address> addresses = null;
@@ -402,6 +440,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         }
         if (addresses.size() > 0) {
             makeWeatherApiCall(addresses.get(0).getLocality());
+            weatherForeCastService(addresses.get(0).getLocality());
+
         }
 
 
@@ -476,6 +516,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     @Override
     public boolean onQueryTextSubmit(String query) {
         makeWeatherApiCall(query);
+        weatherForeCastService(query);
         if (searchView.isShown()) {
             searchMenuItem.collapseActionView();
             searchView.setQuery("", false);

@@ -5,7 +5,9 @@ import android.text.TextUtils;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
+import com.polaris.utils.LRUBitmapCache;
 
 /**
  * Created by kgopal on 4/19/17.
@@ -15,6 +17,7 @@ import com.android.volley.toolbox.Volley;
 public class OpenWeatherApp extends Application {
 
     public RequestQueue mRequestQueue;
+    private ImageLoader mImageLoader;
 
 
     /**
@@ -29,6 +32,7 @@ public class OpenWeatherApp extends Application {
 
     /**
      * get the api request
+     *
      * @return
      */
 
@@ -41,6 +45,7 @@ public class OpenWeatherApp extends Application {
 
     /**
      * add server api request to the centralized queue which is provided by Volley
+     *
      * @param req
      * @param tag
      * @param <T>
@@ -53,6 +58,7 @@ public class OpenWeatherApp extends Application {
 
     /**
      * Cancel the api request that is submitted to the queue
+     *
      * @param tag
      */
 
@@ -62,4 +68,13 @@ public class OpenWeatherApp extends Application {
         }
     }
 
+
+    public ImageLoader getImageLoader() {
+        getRequestQueue();
+        if (mImageLoader == null) {
+            mImageLoader = new ImageLoader(this.mRequestQueue,
+                    new LRUBitmapCache());
+        }
+        return this.mImageLoader;
+    }
 }

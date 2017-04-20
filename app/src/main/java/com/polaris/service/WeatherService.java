@@ -11,6 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.polaris.model.WeatherDetail;
 import com.polaris.openweather.OpenWeatherApp;
+import com.polaris.utils.Constants;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,7 +38,6 @@ public class WeatherService {
 
     public static final String OPEN_WEATHER_BASE_URL = "http://api.openweathermap.org/data/2.5/weather";
 
-    public static final String API_KEY = "5fad988ce5de1a276142e4ea733ebedc";
 
     public WeatherServiceCallbacks weatherServiceCallbacks;
 
@@ -56,7 +56,7 @@ public class WeatherService {
 
         String requestURL = "";
         try {
-            requestURL = OPEN_WEATHER_BASE_URL + "?APPID=" + API_KEY + "&q=" + URLEncoder.encode(cityName, "UTF-8");
+            requestURL = OPEN_WEATHER_BASE_URL + "?APPID=" + Constants.API_KEY + "&q=" + URLEncoder.encode(cityName, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -110,5 +110,6 @@ public class WeatherService {
         app.addToRequestQueue(jsObjRequest, "WEATHER_API_REQUEST");
 
     }
+
 
 }

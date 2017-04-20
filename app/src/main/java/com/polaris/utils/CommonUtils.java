@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import static android.content.Context.MODE_PRIVATE;
@@ -26,8 +27,7 @@ public class CommonUtils {
      * @return
      */
     public static String convertKelvinToFarenheit(Double value) {
-
-        Double d = (int) (9 / 5) * (value - 273.15) + 32;
+        Double d = 9d / 5 * (value - 273.15) + 32;
         DecimalFormat decimalFormat = new DecimalFormat("#.#");
         return String.valueOf(decimalFormat.format(Math.floor(d)));
     }
@@ -79,9 +79,23 @@ public class CommonUtils {
     public static String getStandardTime(Integer unixTime) {
         long unixSeconds = unixTime;
         Date date = new Date(unixSeconds * 1000L); // *1000 is to convert seconds to milliseconds
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); // the format of your date
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm a"); // the format of your date
         sdf.setTimeZone(TimeZone.getTimeZone("EST")); // give a timezone reference for formating (see comment at the bottom
         String formattedDate = sdf.format(date);
         return formattedDate;
     }
+
+    /**
+     * get week day for the given unix time
+     */
+
+    public static String getWeekday(Integer unixTime) {
+        long unixSeconds = unixTime;
+        Date date = new Date(unixSeconds * 1000L); // *1000 is to convert seconds to milliseconds
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE", Locale.getDefault()); // the format of your date
+        sdf.setTimeZone(TimeZone.getTimeZone("EST")); // give a timezone reference for formating (see comment at the bottom
+        String formattedDate = sdf.format(date);
+        return formattedDate;
+    }
+
 }
