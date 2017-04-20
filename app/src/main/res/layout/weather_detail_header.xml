@@ -18,23 +18,34 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/weatherDescription"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:text="Description"
+        android:layout_below="@id/cityLbl"
+        android:layout_marginLeft="10dp"
+        android:textColor="@android:color/white"
+        android:textSize="16sp" />
+
+    <TextView
         android:id="@+id/weatherDegree"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/cityLbl"
+        android:layout_below="@id/weatherDescription"
         android:layout_gravity="center_vertical"
-        android:text="44"
         android:layout_marginLeft="10dp"
+        android:text="44"
         android:textColor="@android:color/white"
-        android:textSize="24sp" />
+        android:textSize="28sp" />
 
 
     <LinearLayout
         android:id="@+id/container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="50dp"
-        android:layout_toRightOf="@id/cityLbl"
+        android:layout_below="@id/weatherDegree"
+        android:layout_marginLeft="10dp"
         android:orientation="vertical">
 
         <ImageView
@@ -43,14 +54,7 @@
             android:layout_height="50dp" />
 
 
-        <TextView
-            android:id="@+id/weatherDescription"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="start"
-            android:text="Description"
-            android:textColor="@android:color/white"
-            android:textSize="16sp" />
+
 
     </LinearLayout>
 
