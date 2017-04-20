@@ -105,7 +105,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     String city;
 
     /**
-     * Activity view gets loaded,
+     * Activity view gets loaded.
+     * Weathee Api information is fetched for last searched city
      *
      * @param savedInstanceState
      */
@@ -116,10 +117,12 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         setContentView(R.layout.activity_weather_main);
         weatherDetailListView = (ListView) findViewById(R.id.weatherDetailList);
         LayoutInflater inflater = getLayoutInflater();
+        //Header added to listview
         ViewGroup header = (ViewGroup) inflater.inflate(R.layout.weather_detail_header, null);
         weatherDetailListView.addHeaderView(header);
         weatherListData = new ArrayList<>();
 
+        //Footer added to listview
         ViewGroup footer = (ViewGroup) inflater.inflate(R.layout.weather_deatil_footer, null);
         weatherDetailListView.addFooterView(footer);
         horizontalView = (RecyclerView) footer.findViewById(R.id.recycler_view);
@@ -156,7 +159,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
             @Override
             public void onFailure(String error) {
-//Show error to the user
+                //Show error to the user in case of service failure
                 AlertDialog.Builder builder = new AlertDialog.Builder(WeatherMainActivity.this)
                         .setTitle("Alert!")
                         .setMessage(error)
@@ -208,6 +211,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
      */
     private void loadWeatherDetail(WeatherDetail weatherDetail) {
 
+        //Clear the list before filling the data again
         weatherListData.clear();
 
         if (weatherDetail != null) {
@@ -263,6 +267,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
             String iconUrl = Constants.WEATHER_ICON_URL + weatherDetail.getWeather().get(0).getIcon() + ".png";
 
 
+            //Supersript degree symbol added
             tempLbl.setText(CommonUtils.convertKelvinToCelsius(weatherDetail.getMain().getTemp()) + (char) 0x00B0 + "C"
 
                     + " / " + CommonUtils.convertKelvinToFarenheit(weatherDetail.getMain().getTemp()) + (char) 0x00B0 + "F");
@@ -307,12 +312,19 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         return true;
     }
 
+    /**
+     * Handles menu action clicks (search/refresh)
+     *
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.refresh:
                 if (CommonUtils.getCity(this) != null) {
                     makeWeatherApiCall(CommonUtils.getCity(this));
+                    weatherForeCastService(CommonUtils.getCity(this));
                 }
                 return true;
 
@@ -362,7 +374,7 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
 
     /**
-     * Requesting Location Updates
+     * Requesting Location Updates. For OS 6.0 and above, permission is being asked
      */
     protected void startLocationUpdates() {
 
@@ -380,6 +392,11 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     }
 
 
+    /**
+     * Callback for Google Api Client
+     *
+     * @param bundle
+     */
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         Log.i(TAG, "Google API Client Connected");
@@ -423,6 +440,9 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     }
 
 
+    /**
+     * Stops location updates
+     */
     protected void stopLocationUpdates() {
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(

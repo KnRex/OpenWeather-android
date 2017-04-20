@@ -10,7 +10,7 @@ public class Constants {
     public static final String WEATHER_ICON_URL = "http://openweathermap.org/img/w/";
 
     //API Keys for Open Weather api request
-    public static final String API_KEY = "5fad988ce5de1a276142e4ea733ebedc";
+    public static final String API_KEY = "cdf3ccb83aea99f19f70d1da1c290bcb";
 
 
 }

@@ -41,15 +41,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/weatherIconView"
-        android:textColor="@android:color/white"
-        android:layout_marginLeft="16dp"
         android:layout_marginBottom="8dp"
-       >
+        android:layout_marginLeft="16dp"
+        android:textColor="@android:color/white">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="10dp"
             android:text="Last Update : "
             android:textColor="@android:color/white"
             android:textSize="16sp" />
@@ -58,7 +56,6 @@
             android:id="@+id/dateLbl"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
             android:text="lbl"
             android:textColor="@android:color/white"
             android:textSize="16sp" />
