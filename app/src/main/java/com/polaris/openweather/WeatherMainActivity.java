@@ -40,10 +40,16 @@ import com.android.volley.toolbox.ImageRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
 import com.polaris.model.WeatherDetail;
 import com.polaris.model.WeatherList;
 import com.polaris.service.ImageLoaderService;
@@ -54,9 +60,12 @@ import com.polaris.utils.WeatherAdapter;
 import org.w3c.dom.Text;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class WeatherMainActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks, LocationListener, GoogleApiClient.OnConnectionFailedListener, SearchView.OnQueryTextListener {
 
@@ -64,7 +73,6 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
     private ArrayList<WeatherList> weatherListData;
 
-    private TextView cityLbl;
 
     private TextView tempLbl;
 
@@ -85,6 +93,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     private MenuItem searchMenuItem;
 
 
+    String city;
+
     /**
      * Activity view gets loaded,
      *
@@ -100,7 +110,6 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         weatherDetailListView.addHeaderView(myHeader);
         weatherListData = new ArrayList<>();
 
-        cityLbl = (TextView) myHeader.findViewById(R.id.cityLbl);
         tempLbl = (TextView) myHeader.findViewById(R.id.weatherDegree);
         descriptionLbl = (TextView) myHeader.findViewById(R.id.weatherDescription);
         weatherIconView = (ImageView) myHeader.findViewById(R.id.weatherIconView);
@@ -179,6 +188,27 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
                 weatherListData.add(visibility);
             }
 
+            if(weatherDetail.getDt()!=null){
+                WeatherList lastUpdated = new WeatherList();
+                lastUpdated.setWeatherKey("Updated At :");
+                lastUpdated.setWeatherInfo(CommonUtils.getStandardTime(weatherDetail.getDt()));
+                weatherListData.add(lastUpdated);
+            }
+
+            if(weatherDetail.getSys().getSunrise()!=null){
+                WeatherList sunRise = new WeatherList();
+                sunRise.setWeatherKey("Sunrise :");
+                sunRise.setWeatherInfo(CommonUtils.getStandardTime(weatherDetail.getSys().getSunrise()));
+                weatherListData.add(sunRise);
+            }
+
+            if(weatherDetail.getSys().getSunset()!=null){
+                WeatherList sunSet = new WeatherList();
+                sunSet.setWeatherKey("Sunset :");
+                sunSet.setWeatherInfo(CommonUtils.getStandardTime(weatherDetail.getSys().getSunrise()));
+                weatherListData.add(sunSet);
+            }
+
             setTitle(weatherDetail.getName() + ", " + weatherDetail.getSys().getCountry());
             descriptionLbl.setText(weatherDetail.getWeather().get(0).getDescription());
 
@@ -227,6 +257,19 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.refresh:
+                if (CommonUtils.getCity(this) != null) {
+                    makeWeatherApiCall(CommonUtils.getCity(this));
+                }
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
 
     /**
      * Get the user location which acquired ny wifi/cell tower
@@ -235,9 +278,36 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
         mLocationRequest = new LocationRequest();
         mLocationRequest.setInterval(10000);
         mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(mLocationRequest);
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient,
+                        builder.build());
+
+        result.setResultCallback(new ResultCallback<LocationSettingsResult>() {
+            @Override
+            public void onResult(@NonNull LocationSettingsResult locationSettingsResult) {
+                final Status status = locationSettingsResult.getStatus();
+                //final LocationSettingsStates =locationSettingsResult.getLocationSettingsStates();
+                switch (status.getStatusCode()) {
+                    case LocationSettingsStatusCodes.SUCCESS:
+                        // All location settings are satisfied. The client can
+                        // initialize location requests here.
+
+                        break;
+                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+
+                        break;
+                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                        // Location settings are not satisfied. However, we have no way
+                        // to fix the settings so we won't show the dialog.
+
+                        break;
+                }
+            }
+        });
+
     }
 
 
@@ -246,8 +316,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
      */
     protected void startLocationUpdates() {
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            askForPermission(Manifest.permission.ACCESS_COARSE_LOCATION, 100);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, 100);
 
         } else {
             createLocationRequest();
@@ -273,6 +343,15 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
     @Override
     protected void onResume() {
         super.onResume();
+        // if (CommonUtils.getCity(this) == null) {
+
+        // }
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
         if (CommonUtils.getCity(this) == null) {
             if (mGoogleApiClient == null) {
                 mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -281,22 +360,24 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
                         .addApi(LocationServices.API)
                         .build();
             }
-            //  mGoogleApiClient.connect();
+            mGoogleApiClient.connect();
         }
-
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
+    protected void onStop() {
+        super.onStop();
+        if (mGoogleApiClient != null) {
+            stopLocationUpdates();
+            mGoogleApiClient.disconnect();
+        }
     }
+
 
     protected void stopLocationUpdates() {
         if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
             LocationServices.FusedLocationApi.removeLocationUpdates(
                     mGoogleApiClient, this);
-            mGoogleApiClient.disconnect();
         }
 
     }
@@ -309,6 +390,8 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
      */
     @Override
     public void onLocationChanged(Location location) {
+        stopLocationUpdates();
+        Toast.makeText(this, "" + " is already granted.", Toast.LENGTH_SHORT).show();
 
         Geocoder gcd = new Geocoder(this, Locale.getDefault());
         List<Address> addresses = null;
@@ -330,7 +413,6 @@ public class WeatherMainActivity extends AppCompatActivity implements GoogleApiC
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.i("aafas", "GoogleApiClient connection failed: " + connectionResult.toString());
         if (!connectionResult.hasResolution()) {
             // show the localized error dialog.
             GoogleApiAvailability.getInstance().getErrorDialog(this, connectionResult.getErrorCode(), 0).show();

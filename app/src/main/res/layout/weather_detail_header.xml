@@ -4,27 +4,16 @@
     android:layout_height="match_parent"
     android:background="@color/colorPrimary">
 
-    <TextView
-        android:id="@+id/cityLbl"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="10dp"
-        android:text="Norwalk"
-        android:textColor="@android:color/white"
-        android:textSize="20sp"
-        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/weatherDescription"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
         android:layout_gravity="start"
+        android:layout_marginLeft="18dp"
+        android:layout_marginTop="10dp"
         android:text="Description"
-        android:layout_below="@id/cityLbl"
-        android:layout_marginLeft="10dp"
         android:textColor="@android:color/white"
         android:textSize="16sp" />
 
@@ -34,29 +23,19 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/weatherDescription"
         android:layout_gravity="center_vertical"
-        android:layout_marginLeft="10dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="10dp"
         android:text="44"
         android:textColor="@android:color/white"
         android:textSize="28sp" />
 
 
-    <LinearLayout
-        android:id="@+id/container"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/weatherIconView"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_below="@id/weatherDegree"
-        android:layout_marginLeft="10dp"
-        android:orientation="vertical">
-
-        <ImageView
-            android:id="@+id/weatherIconView"
-            android:layout_width="50dp"
-            android:layout_height="50dp" />
-
-
-
-
-    </LinearLayout>
+        android:layout_marginLeft="18dp" />
 
 
 </RelativeLayout>

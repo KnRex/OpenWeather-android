@@ -4,6 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 import static android.content.Context.MODE_PRIVATE;
 
@@ -67,5 +70,18 @@ public class CommonUtils {
         SharedPreferences pref = ctx.getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         return pref.getString("CITY", null);
 
+    }
+
+    /**
+     * Convert unix time to current time
+     */
+
+    public static String getStandardTime(Integer unixTime) {
+        long unixSeconds = unixTime;
+        Date date = new Date(unixSeconds * 1000L); // *1000 is to convert seconds to milliseconds
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z"); // the format of your date
+        sdf.setTimeZone(TimeZone.getTimeZone("EST")); // give a timezone reference for formating (see comment at the bottom
+        String formattedDate = sdf.format(date);
+        return formattedDate;
     }
 }

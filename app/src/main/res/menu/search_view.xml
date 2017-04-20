@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:weatherapp="http://schemas.android.com/apk/res-auto">
+
+    <item android:id="@+id/refresh"
+        android:title="@string/refresh"
+        android:icon="@drawable/ic_refresh_white_48dp"
+        weatherapp:showAsAction="ifRoom"
+        />
     <item android:id="@+id/search"
         android:title="@string/search_city"
-        android:icon="@android:drawable/ic_menu_search"
-        weatherapp:showAsAction="collapseActionView|ifRoom"
+        android:icon="@drawable/ic_magnify_white_48dp"
+        weatherapp:showAsAction="collapseActionView|always"
         weatherapp:actionViewClass="android.support.v7.widget.SearchView"/>
     />
+
+
 </menu>
