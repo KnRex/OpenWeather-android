@@ -52,6 +52,8 @@ public class WeatherService {
 
         final String requestURL = OPEN_WEATHER_BASE_URL + "?APPID=" + API_KEY + "&q=" + cityName;
 
+        Log.i(TAG, "URL" + requestURL);
+
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, requestURL, null, new Response.Listener<JSONObject>() {
 
@@ -62,12 +64,11 @@ public class WeatherService {
                         try {
                             if (response != null) {
                                 if (response.get("cod") instanceof Integer) {
-                                    Log.i(TAG, "Response==>" + "Weather API request succeded");
+                                    Log.i(TAG, "Response==>" + "Weather API request succeeded");
                                     Gson gson = new GsonBuilder().create();
                                     WeatherDetail weatherDetail = gson.fromJson(response.toString(), WeatherDetail.class);
                                     weatherServiceCallbacks.onSuccessResponse(weatherDetail);
-                                }
-                                else{
+                                } else {
                                     Log.e(TAG, "City not found");
                                     weatherServiceCallbacks.onFailure();
 
